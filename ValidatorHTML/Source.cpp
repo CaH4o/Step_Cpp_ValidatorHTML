@@ -30,11 +30,12 @@ public:
 		_isValide = true;
 		_tegs = tegs; 
 		ValidCheck(content);
-		CheckOpenandCloseTegs();
 		Show();
 	}
 
 	string ValidCheck(string s) {
+		string tegOpen;
+		string tegClose;
 
 		do
 		{
@@ -49,13 +50,24 @@ public:
 
 			if (nextTeg == selfClose) {
 				s = CheckTeg(s);
+				s = s.substr(s.find('%') + 1);
 				continue;
 			}
 
 			if (nextTeg == open)
 			{
 				s = CheckTeg(s);
-				s = ValidCheck(s); //recurs case
+				tegOpen = s.substr(0, s.find('%'));
+				s = s.substr(tegOpen.length() + 1);
+				s = ValidCheck(s);					//recurs case
+				tegClose = s.substr(0, s.find('%'));
+
+				if (tegOpen != tegClose) {
+					_isValide = false;
+					return "";
+				}
+
+				s = s.substr(tegClose.length() + 1);
 			}
 
 			if (nextTeg == close)
@@ -150,15 +162,11 @@ private:
 
 		for (size_t i = 0; i < _tegs.size(); ++i)
 		{
-			if (sTeg == _tegs[i]) return s;
+			if (sTeg == _tegs[i]) return sTeg + "%" + s;
 		}
 
 		_isValide = false;
 		return "";
-	}
-
-	void CheckOpenandCloseTegs() {
-		if (_tegOpen != _tegClose) _isValide = false;
 	}
 
 	void Show() {
@@ -187,13 +195,13 @@ void main()
 		vector <string> tegs = { "HTML","BODY","BR","html","body","br" };
 
 		cout << "Enter the path of \"HTML\" file:\n";
-		cin >> sPath;
-		//sPath = "html.txt";
+		//cin >> sPath;
+		//getchar();
+
+		sPath = "html.txt";
 		cout << sPath;
-		getchar();
 
 		inFstream.open(sPath);
-
 
 		if (inFstream.is_open())
 		{
