@@ -1,1 +1,4 @@
-﻿  ValidatorHTML.vcxproj -> C:\Users\UA0625-DESKTOP\source\repos\ValidatorHTML\Debug\ValidatorHTML.exe
+﻿  Source.cpp
+w:\git\step_cpp_validatorhtml\validatorhtml\source.cpp(180): warning C4326: return type of 'main' should be 'int' instead of 'void'
+w:\git\step_cpp_validatorhtml\validatorhtml\source.cpp(113): warning C4715: 'Validator::CheckOrder': not all control paths return a value
+  ValidatorHTML.vcxproj -> W:\Git\Step_Cpp_ValidatorHTML\Debug\ValidatorHTML.exe

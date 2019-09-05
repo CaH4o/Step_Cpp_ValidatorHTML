@@ -1,141 +1,223 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
-using namespace std;
+using std::cout;
+using std::cin;
 
-enum eTeg { error, open, close, selfClose};
+using std::ifstream;
+using std::ofstream;
+using std::string;
+using std::vector;
+using std::size_t;
+
+enum eTeg { error, open, close, selfClose };
 enum eStatus { Non, OpenLeft, CloseLeft };
 
-vector <string> tegs = { "HTML","BODY","BR","html","body","br" };
-bool isValide = true;
+/*
+<html>
+	<body>To be or not to be</body>
+	<br/>
+</html>
+*/
 
-eTeg CheckOrder(const string& s);
-string CheckTeg(string s);
+class Validator {
+public:
+	explicit Validator(string content, vector <string> tegs) {
+		_sContent = _sContent;
+		_tegOpen = _tegClose = _tegSelfClose = 0;
+		_isValide = true;
+		_tegs = tegs; 
+		ValidCheck(content);
+		CheckOpenandCloseTegs();
+		Show();
+	}
 
-//Проверка на валидность.
-string Validator(string s) {
+	string ValidCheck(string s) {
 
-	do
-	{
-		if (s == "") return ""; //stop case;
-
-		eTeg nextTeg = CheckOrder(s);
-
-		if (nextTeg == error) {
-			isValide = false;
-			return "";
-		}
-
-		if (nextTeg == selfClose) {
-			s = CheckTeg(s);
-			continue;
-		}
-
-		if (nextTeg == open)
+		do
 		{
-			s = CheckTeg(s);
-			s = Validator(s);
-		}
+			if (s == "") return ""; //stop case;
 
-		if (nextTeg == close)
+			eTeg nextTeg = CheckOrder(s);
+
+			if (nextTeg == error) {
+				_isValide = false;
+				return "";
+			}
+
+			if (nextTeg == selfClose) {
+				s = CheckTeg(s);
+				continue;
+			}
+
+			if (nextTeg == open)
+			{
+				s = CheckTeg(s);
+				s = ValidCheck(s); //recurs case
+			}
+
+			if (nextTeg == close)
+			{
+				return CheckTeg(s);
+			}
+
+		} while (true);
+
+		return "";
+	}
+
+private:
+
+	eTeg CheckOrder(const string& s) {
+		eStatus status = Non;
+
+		for (size_t i = 0; i < s.length(); ++i)
 		{
-			return CheckTeg(s);
+			switch (status) {
+			case Non:
+				if (s[i] == '<' && s[i + 1] == '/') {
+					status = CloseLeft;
+					++i;
+					continue;
+				}
+				if (s[i] == '<') {
+					status = OpenLeft;
+					continue;
+				}
+				if (s[i] == '>' || s[i] == '/') return error;
+				continue;
+			case CloseLeft:
+				if (s[i] == '>') {
+					++_tegClose;
+					return close;
+				}
+				else if (s[i] == '<' || s[i] == '/') return error;
+				continue;
+			case OpenLeft:
+				if (s[i] == '/' && s[i + 1] == '>') { 
+					++_tegSelfClose;
+					return selfClose; 
+				}
+				if (s[i] == '>') {
+					++_tegOpen;
+					return open;
+				}
+				if (s[i] == '/' || s[i] == '<') return error;
+				continue;
+			default:
+				break;
+			}
+		}
+	}
+
+	string CheckTeg(string s) {
+		string sTeg = "";
+		bool isNotCompletedTeg = false;
+
+		for (size_t i = 0; i < s.length(); ++i)
+		{
+			if (s[i] == '<') {
+				s = s.substr(i);
+				break;
+			}
 		}
 
-	} while (true);
-
-	return "";
-}
-
-//проверка тега на правильную очередность управляющих знаков "<", ">" и "/".
-eTeg CheckOrder(const string& s) {
-	eStatus status = Non;
-
-	for (size_t i = 0; i < s.length(); ++i)
-	{
-		switch (status) {
-		case Non:
-			if (s[i] == '<' && s[i + 1] == '/') { 
-				status = CloseLeft; 
+		for (size_t i = 0; i < s.length(); ++i)
+		{
+			if (sTeg == "" && s[i] == '<' && s[i + 1] == '/') { // Left </teg>
 				++i;
+				isNotCompletedTeg = true;
 				continue;
 			}
-			if (s[i] == '<') { 
-				status = OpenLeft; 
+			if (sTeg == "" && s[i] == '<') { // Left <teg>, <teg/>
+				isNotCompletedTeg = true;
 				continue;
 			}
-			if (s[i] == '>' || s[i] == '/') return error;
-			continue;
-		case CloseLeft:
-			if (s[i] == '>') return close;
-			else if (s[i] == '<' || s[i] == '/') return error;
-			continue;
-		case OpenLeft:
-			if (s[i] == '/' && s[i + 1] == '>') return selfClose;
-			if (s[i] == '>') return open;
-			if (s[i] == '/' || s[i] == '<') return error;
-			continue;
-		default:
-			break;
+			if (sTeg != "" && s[i] == '/' && s[i + 1] == '>') { // Right <teg/>
+				s = s.substr(i + 2);
+				break;
+			}
+			if (sTeg != "" && s[i] == '>') { // Right <teg>, </teg>
+				s = s.substr(i + 1);
+				break;
+			}
+
+			if (isNotCompletedTeg && s[i] == ' ') isNotCompletedTeg = false;
+			if (isNotCompletedTeg) sTeg += s[i];
 		}
+
+		for (size_t i = 0; i < _tegs.size(); ++i)
+		{
+			if (sTeg == _tegs[i]) return s;
+		}
+
+		_isValide = false;
+		return "";
 	}
-}
 
-//проверка тега на корректное написание относительно списка тегов.
-string CheckTeg(string s) {
-	string teg = "";
-	bool isNotCompletedTeg = false;
+	void CheckOpenandCloseTegs() {
+		if (_tegOpen != _tegClose) _isValide = false;
+	}
 
-	for (size_t i = 0; i < s.length(); ++i)
+	void Show() {
+		if (_isValide) { 
+			cout << "Valid\nOpen tegs: " << _tegOpen << "\nClose tegs: " << _tegClose << "\nSelf close tegs: " << _tegSelfClose << "\n";
+		}
+		else cout << "Invalid.\n";
+	}
+
+	string _sContent;
+	int _tegOpen;
+	int _tegClose;
+	int _tegSelfClose;
+	bool _isValide;
+	vector <string> _tegs;
+};
+
+void main()
+{
+	setlocale(LC_ALL, "rus");
+
+	try
 	{
-		if (s[i] == '<') {
-			s = s.substr(i);
-			break;
+		ifstream inFstream;
+		string sPath;
+		vector <string> tegs = { "HTML","BODY","BR","html","body","br" };
+
+		cout << "Enter the path of \"HTML\" file:\n";
+		cin >> sPath;
+		//sPath = "html.txt";
+		cout << sPath;
+		getchar();
+
+		inFstream.open(sPath);
+
+
+		if (inFstream.is_open())
+		{
+			string sFileContent;
+			string sTemp;
+
+			cout << "\nThe file upload.\n\n";
+
+			while (getline(inFstream, sTemp))
+				sFileContent.append(sTemp);
+
+			inFstream.close();
+
+			Validator valid = Validator(sFileContent, tegs);
+		}
+		else
+		{
+			cout << "\nFile is not found.\n";
 		}
 	}
-
-	for (size_t i = 0; i < s.length(); ++i)
+	catch (const std::exception&)
 	{
-		if (teg == "" && s[i] == '<' && s[i + 1] == '/') { // Left </teg>
-			++i;
-			isNotCompletedTeg = true;
-			continue;
-		}
-		if (teg == "" && s[i] == '<') { // Left <teg>, <teg/>
-			isNotCompletedTeg = true;
-			continue;
-		}
-		if (teg != "" && s[i] == '/' && s[i + 1] == '>') { // Right <teg/>
-			s = s.substr(i + 2);
-			break;
-		}
-		if (teg != "" && s[i] == '>') { // Right <teg>, </teg>
-			s = s.substr(i + 1);
-			break;
-		}
-
-		if (isNotCompletedTeg && s[i] == ' ') isNotCompletedTeg = false;
-		if (isNotCompletedTeg) teg += s[i];
+		cout << "\nThere is some misstake.\n";
 	}
 
-	for (size_t i = 0; i < tegs.size(); ++i)
-	{
-		if (teg == tegs[i]) return s;
-	}
-
-	isValide = false;
-	return "";
+	getchar();
 }
-
-
-void main() {
-
-	string code = "<HTML key=1><BODY>Some text</BODY><BR/></HTML>";
-	Validator(code);
-	
-	(isValide) ? cout << "Valid\n" : cout << "Invalid\n" ;
-
-	system("pause");
-}
-
