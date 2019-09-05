@@ -5,9 +5,7 @@
 
 using std::cout;
 using std::cin;
-
 using std::ifstream;
-using std::ofstream;
 using std::string;
 using std::vector;
 using std::size_t;
@@ -32,7 +30,7 @@ public:
 		ValidCheck(content);
 		Show();
 	}
-
+private:
 	string ValidCheck(string s) {
 		string tegOpen;
 		string tegClose;
@@ -80,8 +78,7 @@ public:
 		return "";
 	}
 
-private:
-
+	//check next teg in right order and if it is correct, return teg type
 	eTeg CheckOrder(const string& s) {
 		eStatus status = Non;
 
@@ -124,11 +121,12 @@ private:
 		}
 	}
 
+	//check a teg with tegs list and return cut string with open/close teg to compare.
 	string CheckTeg(string s) {
 		string sTeg = "";
 		bool isNotCompletedTeg = false;
 
-		for (size_t i = 0; i < s.length(); ++i)
+		for (size_t i = 0; i < s.length(); ++i)		//cut untill "<"
 		{
 			if (s[i] == '<') {
 				s = s.substr(i);
@@ -184,48 +182,68 @@ private:
 	vector <string> _tegs;
 };
 
+class FileWorker {
+public:
+	FileWorker() {
+		_sPath = "html.txt";
+		cout << _sPath;
+
+	}
+
+	FileWorker(string path) {
+		_sPath = path;
+	}
+
+	string Read() {
+		string sFileContent = "";
+
+		try	{
+			_inFstream.open(_sPath);
+
+			if (_inFstream.is_open()) {
+				string sTemp;
+
+				cout << "\nThe file upload.\n\n";
+
+				while (getline(_inFstream, sTemp))
+					sFileContent.append(sTemp);
+
+				_inFstream.close();
+			}
+			else {
+				cout << "\nFile is not found.\n";
+			}
+		}
+		catch (const std::exception&)
+		{
+			cout << "\nThere is some misstake.\n";
+		}
+
+		return sFileContent;
+	}				
+
+private:
+	ifstream _inFstream;
+	string _sPath;
+};
+
 void main()
 {
 	setlocale(LC_ALL, "rus");
 
-	try
-	{
-		ifstream inFstream;
-		string sPath;
-		vector <string> tegs = { "HTML","BODY","BR","html","body","br" };
+	string sPath;
+	string sContant;
+	vector <string> vsTegs = { "HTML","BODY","BR","html","body","br" };
 
-		cout << "Enter the path of \"HTML\" file:\n";
-		//cin >> sPath;
-		//getchar();
+	cout << "Enter the path of \"HTML\" file:\n";
+	cin >> sPath;
+	getchar();
 
-		sPath = "html.txt";
-		cout << sPath;
+	FileWorker fileRead = FileWorker(sPath);
+	sContant = fileRead.Read();
 
-		inFstream.open(sPath);
+	Validator valid = Validator(sContant, vsTegs);
 
-		if (inFstream.is_open())
-		{
-			string sFileContent;
-			string sTemp;
-
-			cout << "\nThe file upload.\n\n";
-
-			while (getline(inFstream, sTemp))
-				sFileContent.append(sTemp);
-
-			inFstream.close();
-
-			Validator valid = Validator(sFileContent, tegs);
-		}
-		else
-		{
-			cout << "\nFile is not found.\n";
-		}
-	}
-	catch (const std::exception&)
-	{
-		cout << "\nThere is some misstake.\n";
-	}
 
 	getchar();
 }
