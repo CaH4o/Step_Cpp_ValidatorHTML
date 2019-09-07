@@ -30,28 +30,26 @@ public:
 
 	}
 
-	bool Check() {
-		if (isHasTeg()) {
+	bool Check(bool show = true) {
+		if (_sContent[0] == '<') {
+			_isValide = true;
 			ValidCheck(_sContent);
-			Show();
-			return _isValide;
+			if (_tegOpen != _tegClose) _isValide = false;
 		}
+		else _isValide = false;
 
-		return false;
+		if (show) Show();
+		return _isValide;
 	}
 
 private:
-	bool isHasTeg() {
-		return (-1 != _sContent.find_first_of("</>"));
-	}
-
 	string ValidCheck(string s) {
 		string tegOpen;
 		string tegClose;
 
 		do
 		{
-			if (s == "") return ""; //stop case;
+			if (s == "") return "";					//stop case;
 
 			eTeg nextTeg = CheckOrder(s);
 
@@ -133,6 +131,8 @@ private:
 				break;
 			}
 		}
+
+		return error;
 	}
 
 	//check a teg with tegs list and return cut string with open/close teg to compare.
@@ -183,9 +183,9 @@ private:
 
 	void Show() {
 		if (_isValide) { 
-			cout << "Valid\nOpen tegs: " << _tegOpen << "\nClose tegs: " << _tegClose << "\nSelf close tegs: " << _tegSelfClose << "\n";
+			cout << "Valid.\nOpen tegs: " << _tegOpen << "\nClose tegs: " << _tegClose << "\nSelf close tegs: " << _tegSelfClose << "\n";
 		}
-		else cout << "Invalid.\n";
+		else cout << "Invalid.\nOpen tegs: " << _tegOpen << "\nClose tegs: " << _tegClose << "\nSelf close tegs: " << _tegSelfClose << "\n";
 	}
 
 	string _sContent;
