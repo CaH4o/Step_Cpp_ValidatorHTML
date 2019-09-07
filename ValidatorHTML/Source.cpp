@@ -23,14 +23,28 @@ enum eStatus { Non, OpenLeft, CloseLeft };
 class Validator {
 public:
 	explicit Validator(string content, vector <string> tegs) {
-		_sContent = _sContent;
+		_sContent = content;
 		_tegOpen = _tegClose = _tegSelfClose = 0;
 		_isValide = true;
 		_tegs = tegs; 
-		ValidCheck(content);
-		Show();
+
 	}
+
+	bool Check() {
+		if (isHasTeg()) {
+			ValidCheck(_sContent);
+			Show();
+			return _isValide;
+		}
+
+		return false;
+	}
+
 private:
+	bool isHasTeg() {
+		return (-1 != _sContent.find_first_of("</>"));
+	}
+
 	string ValidCheck(string s) {
 		string tegOpen;
 		string tegClose;
@@ -243,7 +257,7 @@ void main()
 	sContant = fileRead.Read();
 
 	Validator valid = Validator(sContant, vsTegs);
-
+	valid.Check();
 
 	getchar();
 }
